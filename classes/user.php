@@ -2,6 +2,7 @@
     // Functie: classdefinitie User
     // Auteur: Van der Wiel
 
+namespace LoginOpdracht\classes;
 class User
 {
     public $username;
