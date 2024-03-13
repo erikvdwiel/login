@@ -1,7 +1,7 @@
 <?php
 
 require "../vendor/autoload.php";
-use LoginOpdracht\classes\user;
+use LoginOpdracht\classes\User;
 
 // Is de register button aangeklikt?
 if(isset($_POST['register-btn'])){
