@@ -18,7 +18,7 @@
 
     require "../vendor/autoload.php";
 
-   // require_once 'classes/user.php';
+   // require_once 'classes/User.php';
     use LoginOpdracht\classes\User;
 
     $user = new User();

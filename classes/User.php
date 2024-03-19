@@ -2,47 +2,32 @@
     // Functie: classdefinitie User
     // Auteur: Van der Wiel
 
-namespace LoginOpdracht\classes;
-class User
+
+namespace LoginOpdracht;
+
+use PDO;
+
+class User extends Database
 {
+
     public $username;
+    public $email;
     private $password;
 
-
-// Database connection properties
-    private static $dbHost = 'localhost';
-    private static $dbUser = 'root';
-    private static $dbPassword = '';
-    private static $dbName = 'login';
-    private static $conn; // PDO connection object
-
-    public function __construct()
-    {
-        $this->initializeDatabase();
-    }
-
-    private function initializeDatabase()
-    {
-        if (!isset(self::$conn)) {
-            $dsn = "mysql:host=" . self::$dbHost . ";dbname=" . self::$dbName;
-
-            try {
-                self::$conn = new PDO($dsn, self::$dbUser, self::$dbPassword);
-                self::$conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-            } catch (PDOException $e) {
-                die("Connection failed: " . $e->getMessage());
-            }
-        }
-    }
-
-function SetPassword($password)
+    function SetPassword($password)
     {
         $this->password = $password;
+    }
+
+    function GetPassword(){
+        return $this->password;
     }
 
     public function ShowUser()
     {
         echo "<br>Username: $this->username<br>";
+        echo "<br>Password: $this->password<br>";
+        echo "<br>Email: $this->email<br>";
     }
 
     public function RegisterUser()
@@ -142,9 +127,10 @@ function SetPassword($password)
     public function Logout()
     {
         session_start();
+
         session_unset();
+
         session_destroy();
-        header('location: index.php');
         exit();
     }
 }

@@ -5,7 +5,7 @@ use LoginOpdracht\classes\User;
 
 // Is de register button aangeklikt?
 if(isset($_POST['register-btn'])){
-	require_once('classes/user.php');
+	require_once('classes/User.php');
 	$user = new User();
 	$errors=[];
 
