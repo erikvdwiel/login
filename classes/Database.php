@@ -1,4 +1,6 @@
 <?php
+// auteur:van der Wiel
+// file niet van toepassing
 
 namespace LoginOpdracht;
 
