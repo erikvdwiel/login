@@ -1,21 +1,22 @@
 <?php
-    // Functie: classdefinitie User
-    // Auteur: Van der Wiel
-
 
 namespace LoginOpdracht;
 
 use PDO;
 
-class User extends Database
-{
+$servername = "localhost";
+$username = "root";
+$password = "";
+$dbname = "login";
 
+class User{
+    // Eigenschappen user
     public $username;
-    public $email;
-    private $password;
 
-    function SetPassword($password)
-    {
+    private $password;
+    private $db;
+
+    function SetPassword($password){
         $this->password = $password;
     }
 
@@ -23,118 +24,158 @@ class User extends Database
         return $this->password;
     }
 
-    public function ShowUser()
-    {
+    public function ShowUser() {
         echo "<br>Username: $this->username<br>";
         echo "<br>Password: $this->password<br>";
-        echo "<br>Email: $this->email<br>";
-    }
 
+    }
+    public function __construct() {
+        $this->db = new PDO("mysql:host=localhost;dbname=login", "root", "");
+        $this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    }
     public function RegisterUser()
     {
-        $errors = $this->ValidateUser();
-        if (!empty($errors)) {
-            return $errors;
-        }
-
-        $sanitizedUsername = $this->conn->quote($this->username);
-        $hashedPassword = password_hash($this->password, PASSWORD_DEFAULT);
-
-        // Check if the user already exists
-        $checkUserQuery = "SELECT * FROM `gegevens` WHERE `username` = $sanitizedUsername";
-        $result = self::$conn->query($checkUserQuery);
-
-        if ($result && $result->rowCount() > 0) {
-            array_push($errors, "Username bestaat al.");
-        } else {
-            // If the user doesn't exist, insert into the database
-            $insertQuery = "INSERT INTO `gegevens` (`username`, `password`) VALUES ($sanitizedUsername, '$hashedPassword')";
-
-            try {
-                self::$conn->exec($insertQuery);
-            } catch (PDOException $e) {
-                array_push($errors, "Error registering user: " . $e->getMessage());
-            }
-        }
-
-        return $errors;
-    }
-
-    function ValidateUser()
-    {
+        $status = false;
         $errors = [];
 
-        if (empty($this->username)) {
-            array_push($errors, "Invalid username");
-        } elseif (empty($this->password)) {
-            array_push($errors, "Invalid password");
-        } elseif (strlen($this->username) < 3 || strlen($this->username) > 50) {
-            array_push($errors, "Username must be between 3 and 50 characters");
+
+        // Check of de gebruiker al bestaat in de database
+        if ($this->UserExists($this->username)) {
+            array_push($errors, "Username bestaat al.");
+        } else {
+            // Gebruiker toevoegen aan de database
+            $hashedPassword = password_hash($this->password, PASSWORD_DEFAULT);
+
+            try {
+                // Voorbereid de SQL-query
+                $stmt = $this->db->prepare("INSERT INTO users (username, password, email) VALUES (:username, :password, :email)");
+                $stmt->bindParam(':username', $this->username);
+                $stmt->bindParam(':password', $hashedPassword);
+                // Voer de query uit
+                if ($stmt->execute()) {
+                    $status = true;
+                } else {
+                    array_push($errors, "Fout bij het toevoegen van de gebruiker.");
+                }
+            } catch (PDOException $e) {
+                // Handle fouten indien nodig
+                echo "Error: " . $e->getMessage();
+            }
         }
 
         return $errors;
     }
 
-    public function LoginUser()
+    private function UserExists($username)
     {
-        $sanitizedUsername = self::$conn->quote($this->username);
+        // Controleer of de gebruiker al bestaat in de tabel 'users'
+        try {
+            $stmt = $this->db->prepare("SELECT * FROM users WHERE username = :username");
+            $stmt->bindParam(':username', $username);
+            $stmt->execute();
 
-        // Search for the user in the database
-        $selectQuery = "SELECT * FROM `gegevens` WHERE `username` = $sanitizedUsername";
-        $result = self::$conn->query($selectQuery);
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        if ($result && $result->rowCount() > 0) {
-            $userData = $result->fetch(PDO::FETCH_ASSOC);
-
-            if (password_verify($this->password, $userData['password'])) {
-                // Start session
-                session_start();
-                $_SESSION['username'] = $this->username;
-                header('location: index.php');
-                exit();
-            } else {
-                echo "Incorrect password";
-            }
-        } else {
-            echo "User not found";
+            return $user ? true : false;
+        } catch (PDOException $e) {
+            // Handle fouten indien nodig
+            echo "Error: " . $e->getMessage();
         }
-
-        return false;
     }
 
-    public function IsLoggedin()
-    {
+    function ValidateUser(){
+        $errors=[];
+
+        if (empty($this->username)){
+            array_push($errors, "Invalid username");
+
+        } else if (strlen($this->username) < 3 || strlen($this->username) > 50) {
+            array_push($errors, "Username moet > 3 en < 50 tekens zijn.");
+
+        } if (empty($this->password)){
+            array_push($errors, "Invalid password");
+        }
+
+        // Test username foutmelding Username moet > 3 en < 50 tekens zijn.
+
+        return $errors;
+    }
+
+    public function LoginUser() {
+        try {
+            // Prepare the SQL query
+            $stmt = $this->db->prepare("SELECT * FROM gegevens WHERE username = :username");
+            $stmt->bindParam(':username', $this->username);
+            // Execute the query
+            $stmt->execute();
+
+            // Fetch the user
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            // Check if user exists and password is correct
+            if ($user && password_verify($this->GetPassword(), $user['password'])) {
+                // Set session variables
+                $_SESSION['username'] = $user['username'];
+
+                return true;
+            } else {
+                return false;
+            }
+        } catch (PDOException $e) {
+            // Handle errors if necessary
+            echo "Error: " . $e->getMessage();
+            return false;
+        }
+    }
+
+    // Check if the user is already logged in
+    public function IsLoggedin() {
+        // Check if user session has been set
         return isset($_SESSION['username']);
     }
 
     public function GetUser($username)
     {
-        $sanitizedUsername = self::$conn->quote($username);
+        try {
+            // Voorbereid de SQL-query
+            $stmt = $this->db->prepare("SELECT * FROM users WHERE username = :username");
+            $stmt->bindParam(':username', $username);
 
-        // Search for the user in the database
-        $selectQuery = "SELECT * FROM `gegevens` WHERE `username` = $sanitizedUsername";
-        $result = self::$conn->query($selectQuery);
+            // Voer de query uit
+            $stmt->execute();
 
-        if ($result && $result->rowCount() > 0) {
-            $userData = $result->fetch(PDO::FETCH_ASSOC);
-            $this->username = $userData['username'];
-            return $this;
-        } else {
-            return NULL;
+            // Haal de gebruiker op
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            // Controleer of de gebruiker is gevonden
+            if ($user) {
+                // Vullen eigenschappen met waarden uit de SELECT
+                $this->username = $user['username'];
+
+                // Je kunt andere eigenschappen ook toevoegen op basis van je databasestructuur
+            } else {
+                return NULL; // Gebruiker niet gevonden
+            }
+
+        } catch (PDOException $e) {
+            // Handle fouten indien nodig
+            echo "Error: " . $e->getMessage();
         }
     }
 
-    public function Logout()
-    {
-        session_start();
 
+    public function Logout(){
+        session_start();
+        // remove all session variables
         session_unset();
 
+        // destroy the session
         session_destroy();
-        exit();
+
+        header('location: index.php');
     }
 }
 
-// Initialize the session
-session_start();
+
+
 ?>

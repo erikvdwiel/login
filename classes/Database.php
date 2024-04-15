@@ -1,7 +1,12 @@
 <?php
+
+namespace LoginOpdracht;
+
+use PDO;
+
 class Database{
 
-    private $user = "root";
+    private $username = "root";
     private $password = "";
     private $dbname = "login";
     private $hostname = "localhost";
@@ -13,7 +18,7 @@ class Database{
             $conn = new PDO("mysql:host=$this->hostname;dbname=$this->dbname", $this->username, $this->password);
             // Set the PDO Error Mode to Exception
             $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-            $conn->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_AS);
+            $conn->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
             //echo "Connected successfully";
             return $conn;
         }

@@ -1,12 +1,14 @@
 <?php
 
 require "../vendor/autoload.php";
-use LoginOpdracht\classes\User;
+require "../classes/User.php";
+
+use LoginOpdracht\User;
 
 // Is de login button aangeklikt?
 if (isset($_POST['login-btn'])) {
 
-    require_once('classes/User.php');
+    require_once('../classes/User.php');
     $user = new User();
 
     $user->username = $_POST['username'];

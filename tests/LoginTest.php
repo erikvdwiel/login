@@ -1,7 +1,7 @@
 <?php
 
-use \PHPUnit\Framework\TestCase;
-use LoginOpdracht\classes\User;
+use PHPUnit\Framework\TestCase;
+use LoginOpdracht\User;
 
 class LoginTest extends TestCase
 {
@@ -25,9 +25,9 @@ class LoginTest extends TestCase
     public function testValidateUserWithShortName()
     {
 
-        $this->user->username = "joh";
+        $this->user->username = "jo";
         $errors = $this->user->ValidateUser();
-        $this->assertContains("Username moet > 3 en < 50 zijn.", $errors);
+        $this->assertContains("Username moet > 3 en < 50 tekens zijn.", $errors);
 
     }
 
